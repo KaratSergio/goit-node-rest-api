@@ -2,7 +2,7 @@ import Contact from "../models/Contact.js";
 
 export const listContacts = () => Contact.find({}, "-createdAt -updatedAt");
 
-export const addContact = (data) => Contact.create(data);
+export const addContact = (body) => Contact.create(body);
 
 export const getContactById = (id) => Contact.findById(id);
 

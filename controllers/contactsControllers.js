@@ -25,12 +25,11 @@ export const deleteContact = async (req, res) => {
 };
 
 export const createContact = async (req, res) => {
-  const { name, email, phone } = req.body;
-  const contact = await contactsService.addContact(name, email, phone);
-  if (!contact) {
+  const newContact = await contactsService.addContact(req.body);
+  if (!newContact) {
     throw HttpError(400);
   }
-  res.status(201).json(contact);
+  res.status(201).json(newContact);
 };
 
 export const updateContact = async (req, res) => {
