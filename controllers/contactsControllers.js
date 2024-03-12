@@ -1,29 +1,32 @@
 import HttpError from "../helpers/HttpError.js";
-import ctrlWrapper from "../helpers/ctrlWrapper.js";
-import * as contactsServices from "../services/contactsServices.js";
 
-export const getAllContacts = async (req, res) => {
-  const contacts = await contactsServices.listContacts();
+import ctrlWrapper from "../decorators/ctrlWrapper.js";
+
+import * as contactsService from "../services/contactsServices.js";
+
+export const getAllContacts = async (_, res) => {
+  const contacts = await contactsService.listContacts();
+  if (!contacts) throw HttpError(404);
   res.json(contacts);
 };
 
 export const getOneContact = async (req, res) => {
   const { id } = req.params;
-  const contact = await contactsServices.getContactById(id);
+  const contact = await contactsService.getContactById(id);
   if (!contact) throw HttpError(404);
   res.json(contact);
 };
 
 export const deleteContact = async (req, res) => {
   const { id } = req.params;
-  const deletedContact = await contactsServices.removeContact(id);
+  const deletedContact = await contactsService.removeContact(id);
   if (!deletedContact) throw HttpError(404);
   res.json(deletedContact);
 };
 
 export const createContact = async (req, res) => {
   const { name, email, phone } = req.body;
-  const contact = await contactsServices.addContact(name, email, phone);
+  const contact = await contactsService.addContact(name, email, phone);
   if (!contact) {
     throw HttpError(400);
   }
@@ -32,15 +35,24 @@ export const createContact = async (req, res) => {
 
 export const updateContact = async (req, res) => {
   const { id } = req.params;
-  if (Object.keys(req.body).length === 0) {
-    throw HttpError(400, "Body must have at least one field");
-  }
-
-  const updatedContact = await contactsServices.updateById(id, req.body);
+  const updatedContact = await contactsService.updateById(id, req.body, {
+    new: true,
+  });
   if (!updatedContact) {
     throw HttpError(404);
   }
   res.status(200).json(updatedContact);
+};
+
+export const updateStatusContact = async (req, res) => {
+  const { id } = req.params;
+  const favoredContact = await contactsService.updateStatusById(id, req.body, {
+    new: true,
+  });
+  if (!favoredContact) {
+    throw HttpError(404);
+  }
+  res.status(200).json(favoredContact);
 };
 
 export const ctrl = {
@@ -49,4 +61,5 @@ export const ctrl = {
   deleteContact: ctrlWrapper(deleteContact),
   createContact: ctrlWrapper(createContact),
   updateContact: ctrlWrapper(updateContact),
+  updateStatusContact: ctrlWrapper(updateStatusContact),
 };
