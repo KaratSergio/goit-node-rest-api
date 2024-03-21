@@ -6,6 +6,7 @@ import { emailRegexp, phoneRegexp } from "../constants/contact-constants.js";
 
 const contactSchema = new Schema(
   {
+    owner: { type: Schema.Types.ObjectId, ref: "user", required: true },
     name: { type: String, required: [true, "Set name for contact"] },
     email: { type: String, match: emailRegexp },
     phone: { type: String, match: phoneRegexp },
@@ -20,6 +21,6 @@ contactSchema.pre("findOneAndUpdate", setUpdateSettings);
 
 contactSchema.post("findOneAndUpdate", handleSaveError);
 
-export const Contact = model("contact", contactSchema);
+const Contact = model("contact", contactSchema);
 
 export default Contact;
