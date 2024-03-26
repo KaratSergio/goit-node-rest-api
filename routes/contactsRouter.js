@@ -4,8 +4,10 @@ import { ctrl } from "../controllers/contactsControllers.js";
 import { schemas } from "../schemas/contactsSchemas.js";
 
 import authenticate from "../middlewares/authenticate.js";
-import validateBody from "../decorators/validateBody.js";
 import isValidId from "../middlewares/isValidId.js";
+import upload from "../middlewares/upload.js";
+
+import validateBody from "../decorators/validateBody.js";
 
 const contactsRouter = express.Router();
 
@@ -19,6 +21,7 @@ contactsRouter.delete("/:id", isValidId, ctrl.deleteContact);
 
 contactsRouter.post(
   "/",
+  upload.single("avatar"),
   validateBody(schemas.createContactSchema),
   ctrl.createContact
 );

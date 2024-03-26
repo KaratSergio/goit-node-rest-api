@@ -1,5 +1,7 @@
 import jwt from "jsonwebtoken";
 
+import gravatar from "gravatar";
+
 import HttpError from "../helpers/HttpError.js";
 
 import ctrlWrapper from "../decorators/ctrlWrapper.js";
@@ -15,14 +17,26 @@ const register = async (req, res) => {
     throw HttpError(409, "Email in use");
   }
 
-  const newUser = await authServices.register(req.body);
+  const avatarURL = gravatar.url(email, {
+    protocol: "https",
+    s: "200",
+    r: "pg",
+    d: "mm",
+  });
+
+  const newUser = await authServices.register({
+    ...req.body,
+    avatarURL,
+  });
   if (!newUser) {
     throw HttpError(404, "Not found");
   }
+
   res.status(201).json({
     user: {
       email: newUser.email,
       subscription: newUser.subscription,
+      avatarURL,
     },
   });
 };
