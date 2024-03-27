@@ -111,6 +111,10 @@ export const updateStatusContact = async (req, res) => {
 };
 
 export const updateAvatar = async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: "No file uploaded" });
+  }
+
   const { _id } = req.user;
   const { path: tmpUpload, originalname } = req.file;
   const img = await Jimp.read(tmpUpload);
