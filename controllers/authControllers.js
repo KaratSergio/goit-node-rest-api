@@ -1,14 +1,18 @@
 import jwt from "jsonwebtoken";
 
+import { nanoid } from "nanoid";
+
 import gravatar from "gravatar";
 
 import HttpError from "../helpers/HttpError.js";
+
+import sendEmail from "../helpers/sendEmail.js";
 
 import ctrlWrapper from "../decorators/ctrlWrapper.js";
 
 import * as authServices from "../services/authServices.js";
 
-const { JWT_SECRET } = process.env;
+const { JWT_SECRET, BASE_URL } = process.env;
 
 const register = async (req, res) => {
   const { email } = req.body;
@@ -24,13 +28,24 @@ const register = async (req, res) => {
     d: "mm",
   });
 
+  const verificationToken = nanoid();
+
   const newUser = await authServices.register({
     ...req.body,
     avatarURL,
+    verificationToken,
   });
   if (!newUser) {
     throw HttpError(404, "Not found");
   }
+
+  const mail = {
+    to: email,
+    subject: "Verify email",
+    html: `<a href="${BASE_URL}/api/users/verify/${verificationToken}" target="_blank">Click to verify email</a>`,
+  };
+
+  await sendEmail(mail);
 
   res.status(201).json({
     user: {
@@ -41,12 +56,52 @@ const register = async (req, res) => {
   });
 };
 
+const verifyEmail = async (req, res) => {
+  const { verificationToken } = req.params;
+  const user = await authServices.findUser({ verificationToken });
+
+  if (!user) {
+    throw HttpError(404, "Not found verification token");
+  }
+  await authServices.updateUser(user._id, {
+    verify: true,
+    verificationToken: "",
+  });
+  res.status(200).json({ message: "Verification successful" });
+};
+
+const resendVerifyEmail = async (req, res) => {
+  const { email } = req.body;
+  const user = await authServices.findUser({ email });
+  if (!user) {
+    throw HttpError(404, "Email not found");
+  }
+  if (user.verify) {
+    throw HttpError(400, "Verification has already been passed");
+  }
+
+  const mail = {
+    to: email,
+    subject: "Verify email",
+    html: `<a href="${BASE_URL}/api/users/verify/${user.verificationToken}" target="_blank">Click to verify email</a>`,
+  };
+
+  await sendEmail(mail);
+
+  res.status(200).json({
+    message: "Verify email send success",
+  });
+};
+
 const login = async (req, res) => {
   const { email, password } = req.body;
 
   const user = await authServices.findUser({ email });
   if (!user) {
     throw HttpError(401, "Email or password is wrong");
+  }
+  if (!user.verify) {
+    throw HttpError(401, "Email not verify");
   }
 
   const comparePassword = await authServices.validatePassword(
@@ -93,4 +148,6 @@ export default {
   register: ctrlWrapper(register),
   getCurrent: ctrlWrapper(getCurrent),
   updateSub: ctrlWrapper(updateSub),
+  verifyEmail: ctrlWrapper(verifyEmail),
+  resendVerifyEmail: ctrlWrapper(resendVerifyEmail),
 };

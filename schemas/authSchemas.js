@@ -17,8 +17,13 @@ const subSchema = Joi.object({
   subscription: Joi.string().required(),
 });
 
+const userEmailSchema = Joi.object({
+  email: Joi.string().pattern(emailRegexp).required(),
+});
+
 export default {
   subSchema,
   loginSchema,
   registerSchema,
+  userEmailSchema,
 };
